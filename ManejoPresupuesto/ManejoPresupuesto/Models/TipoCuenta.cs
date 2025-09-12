@@ -9,9 +9,9 @@ namespace ManejoPresupuesto.Models
 
        // [StringLength(maximumLength:50, MinimumLength=3, ErrorMessage ="La longitud del campo {0} debe estar entre {2} y {1}")]
         //[Display(Name ="Nombre del tipo cuenta")]
-        [Required(ErrorMessage ="El campo {0} es requerido")]
-        [PrimeraLetraMayuscula]
-        [SoloPrimeraMayuscula]
+        [Required(ErrorMessage = "El campo {0} es requerido")]
+        //[PrimeraLetraMayuscula]
+        //[SoloPrimeraMayuscula]
         public string Nombre { get; set; }
         public int UsuarioId { get; set; }
 
