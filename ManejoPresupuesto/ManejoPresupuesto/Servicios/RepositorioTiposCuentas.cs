@@ -12,6 +12,8 @@ namespace ManejoPresupuesto.Servicios
         Task<bool> Existe(string nombre, int usuarioId);
         Task<IEnumerable<TipoCuenta>> Obtener(int usuarioId);
         Task<TipoCuenta> ObtenerPorId(int id, int usuarioId);
+        Task Borrar(int id);
+        Task Ordenar(IEnumerable<TipoCuenta> tipocCuentasOrdenados);
     }
     public class RepositorioTiposCuentas : IRepositorioTiposCuentas
     {
@@ -25,9 +27,14 @@ namespace ManejoPresupuesto.Servicios
         {
             using var connection = new SqlConnection(connectionString);
             var id = await connection.QuerySingleAsync<int>
-                ($@"INSERT INTO TiposCuentas (Nombre, UsuarioId, Orden)
-                Values (@Nombre, @UsuarioId, 0);
-                SELECT SCOPE_IDENTITY();", tipoCuenta);
+                ("TiposCuentas_Insertar",
+                new
+                {
+                    usuarioId = tipoCuenta.UsuarioId,
+                    nombre = tipoCuenta.Nombre
+                },
+                    commandType: System.Data.CommandType.StoredProcedure
+                );
             tipoCuenta.Id = id;
         }
 
@@ -47,7 +54,8 @@ namespace ManejoPresupuesto.Servicios
             return await connection.QueryAsync<TipoCuenta>
                 (@"SELECT Id, Nombre, Orden
                 FROM TiposCuentas
-                WHERE UsuarioId = @UsuarioId;", new { usuarioId });
+                WHERE UsuarioId = @UsuarioId
+                ORDER BY Orden;", new { usuarioId });
         }
 
         public async Task Actualizar(TipoCuenta tipoCuenta)
@@ -67,5 +75,22 @@ namespace ManejoPresupuesto.Servicios
                                                                         WHERE Id = @Id AND UsuarioId = @UsuarioId",
                                                                         new { id, usuarioId });
         }
+
+
+        public async Task Borrar(int id)
+        {
+            using var connection = new SqlConnection(connectionString);
+            await connection.ExecuteAsync("DELETE TiposCuentas Where Id=@Id", new { id });
+        }
+
+
+        public async Task Ordenar(IEnumerable<TipoCuenta> tipocCuentasOrdenados)
+        {
+            var query = "UPDATE TiposCuentas SET Orden = @Orden WHERE Id = @Id;";
+            using var connection = new SqlConnection(connectionString);
+            await connection.ExecuteAsync(query, tipocCuentasOrdenados);
+        }
+
+
     }
 }

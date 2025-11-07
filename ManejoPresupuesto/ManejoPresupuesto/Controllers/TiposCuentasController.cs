@@ -12,7 +12,8 @@ namespace ManejoPresupuesto.Controllers
         private readonly IRepositorioTiposCuentas repositorioTiposCuentas;
         private readonly IServicioUsuarios servicioUsuarios;
 
-        public TiposCuentasController(IRepositorioTiposCuentas repositorioTiposCuentas, IServicioUsuarios servicioUsuarios)
+        public TiposCuentasController(IRepositorioTiposCuentas repositorioTiposCuentas,
+            IServicioUsuarios servicioUsuarios)
         {
             this.repositorioTiposCuentas = repositorioTiposCuentas;
             this.servicioUsuarios = servicioUsuarios;
@@ -70,21 +71,78 @@ namespace ManejoPresupuesto.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Editar(TipoCuenta tipoCuenta)
+        public async Task<IActionResult> Editar(TipoCuenta tipoCuenta)
         {
             var usuarioId = servicioUsuarios.ObtenerUsuarioId();
+
+            if (!ModelState.IsValid)
+            {
+                return View(tipoCuenta);
+            }
+
             var tipoCuentaExiste = await repositorioTiposCuentas.ObtenerPorId(tipoCuenta.Id, usuarioId);
 
             if (tipoCuentaExiste is null)
             {
-                return RedirectToAction("NoEncontrado","Home");
+                return RedirectToAction("NoEncontrado", "Home");
             }
+
+            tipoCuenta.UsuarioId = usuarioId;
 
             await repositorioTiposCuentas.Actualizar(tipoCuenta);
             return RedirectToAction("Index");
         }
 
+        public async Task<IActionResult> Borrar(int id)
+        {
+            var usuarioId = servicioUsuarios.ObtenerUsuarioId();
+            var tipoCuenta = await repositorioTiposCuentas.ObtenerPorId(id, usuarioId);
 
-        
+            if (tipoCuenta is null)
+            {
+                return RedirectToAction("NoEncontrado", "Home");
+            }
+
+            return View(tipoCuenta);
+
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BorrarTipoCuenta(int id)
+        {
+            var usuarioId = servicioUsuarios.ObtenerUsuarioId();
+            var tipoCuenta = await repositorioTiposCuentas.ObtenerPorId(id, usuarioId);
+            if (tipoCuenta is null)
+            {
+                return RedirectToAction("NoEncontrado", "Home");
+            }
+            await repositorioTiposCuentas.Borrar(id);
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Ordenar([FromBody] int[] ids)
+        {
+            var usuarioId = servicioUsuarios.ObtenerUsuarioId();
+            var tipoCuentas = await repositorioTiposCuentas.Obtener(usuarioId);
+            var idsTiposCuentas = tipoCuentas.Select(x =>x.Id);
+
+            var IdsTiposCuentasNoPerteneceAlUsuario = ids.Except(idsTiposCuentas).ToList();
+
+            if (IdsTiposCuentasNoPerteneceAlUsuario.Count > 0)
+            {
+                return Forbid();
+            }
+
+            var tiposCuentasOrdenados = ids.Select((valor, indice) =>
+            new TipoCuenta() { Id = valor, Orden = indice + 1 }).AsEnumerable();
+
+            await repositorioTiposCuentas.Ordenar(tiposCuentasOrdenados);
+            return Ok();        
+        }
+
+
+
+
     }
 }
