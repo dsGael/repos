@@ -1,3 +1,31 @@
-﻿#reordenable tr{
-    cursor:move;
+﻿#reordenable tr {
+    cursor: move;
+}
+
+.contenedor-totales {
+    display: flex;
+    justify-content: space-around;
+    font-size: 26px;
+    text-align: center;
+}
+
+.activo {
+    color: blue;
+}
+
+.pasivo {
+    color: red;
+}
+
+.acordeon-cuentas button {
+    color: black;
+    font-size:20px;
+}
+
+
+.acordeon-cuentas button > span{
+    display:flex;
+    justify-content:space-between;
+    width:100%
+
 }
