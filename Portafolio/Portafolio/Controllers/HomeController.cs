@@ -8,49 +8,36 @@ namespace Portafolio.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly IRepositorioProyectos repositorioProyectos;
+        private readonly IRepositorioProyectos _repositorioProyectos; 
+        private readonly IRepositorioContacto _repositorioContacto;   
 
         public HomeController(ILogger<HomeController> logger,
-            IRepositorioProyectos repositorioProyectos
-)
+            IRepositorioProyectos repositorioProyectos,
+            IRepositorioContacto repositorioContacto)
         {
             _logger = logger;
-            this.repositorioProyectos = repositorioProyectos;
-
+            _repositorioProyectos = repositorioProyectos;
+            _repositorioContacto = repositorioContacto;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            _logger.LogInformation("Este es un mensaje de log");
-            var proyectos = repositorioProyectos.ObtenerProyectos().Take(3).ToList();
+            var proyectos = await _repositorioProyectos.ObtenerProyectos();
 
+            var proyectosDestacados = proyectos.Take(3).ToList();
 
-            var modelo = new HomeIndexVIewModel { Proyectos = proyectos };
-            return View(modelo);
-
+            var HomeIndexViewModel = new HomeIndexViewModel()
+            {
+                Proyectos = proyectosDestacados
+            };
+            
+            return View(HomeIndexViewModel);
         }
 
-        public IActionResult Privacy()
+        public async Task<IActionResult> Proyectos()
         {
-            return View();
-        }
-
-        public IActionResult Proyectos()
-        {
-            var proyectos = repositorioProyectos.ObtenerProyectos();
+            var proyectos = await _repositorioProyectos.ObtenerProyectos();
             return View(proyectos);
-        }
-
-        //public IActionResult Contacto()
-        //{
-        //    return View();
-        //}
-
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
         [HttpGet]
@@ -59,16 +46,28 @@ namespace Portafolio.Controllers
             return View();
         }
 
-
         [HttpPost]
-        public IActionResult Contacto(ContactoViewModel contactoViewModel)
+        public async Task<IActionResult> Contacto(ContactoViewModel contactoViewModel)
         {
-            return RedirectToAction("Gracias");
+            if (ModelState.IsValid)
+            {
+                await _repositorioContacto.CrearContacto(contactoViewModel);
+                
+                return RedirectToAction("Gracias");
+            }
+
+            return View(contactoViewModel);
         }
 
         public IActionResult Gracias()
         {
             return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }

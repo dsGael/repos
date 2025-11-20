@@ -1,6 +1,6 @@
 ﻿namespace Portafolio.Models
 {
-    public class HomeIndexVIewModel
+    public class HomeIndexViewModel
     {
         public IEnumerable<Proyecto> Proyectos { get; set; }
 
